@@ -120,16 +120,16 @@ def train_loop(
     
     model.to(device)
     
-    step_loss_history = [] 
+    
+    epoch_loss_history = [] 
     
     for epoch in range(epochs):
         model.train()
-        epoch_loss = 0
+        running_loss = 0.0
         correct = 0
         total = 0
         
         for batch in tqdm(dataloader, desc=f"Epoch {epoch+1}/{epochs}"):
-            
             input_ids = batch['input_ids'].to(device)
             attention_mask = batch['attention_mask'].to(device)
             labels = batch['label'].to(device).squeeze()
@@ -141,20 +141,23 @@ def train_loop(
             loss.backward() 
             optimizer.step()
             
-            # Record loss for every gradient update 
-            step_loss_history.append(loss.item())
-            epoch_loss += loss.item()
+            
+            running_loss += loss.item()
 
-          
             preds = torch.argmax(logits, dim=1)
             correct += (preds == labels).sum().item()
             total += labels.size(0)
             
-        avg_loss = epoch_loss / len(dataloader)
+      
+        avg_loss = running_loss / len(dataloader)
         train_acc = correct / total
+        
+        
+        epoch_loss_history.append(avg_loss)
+        
         print(f"Epoch {epoch+1}/{epochs} - Avg Loss: {avg_loss:.4f}, Train Acc: {train_acc*100:.2f}%")
         
-    return step_loss_history 
+    return epoch_loss_history
 
 # --- Main Execution ---
 if __name__ == "__main__":
